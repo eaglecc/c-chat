@@ -18,3 +18,14 @@ type DeepSeekResponse struct {
 		Message string `json:"message"`
 	} `json:"error"`
 }
+
+// SSE 流式数据结构
+type SSEData struct {
+	ID      string `json:"id"`
+	Choices []struct {
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+		FinishReason string `json:"finish_reason"`
+	} `json:"choices"`
+}

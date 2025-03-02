@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"c-chat/middleware"
 	"c-chat/model"
+	"c-chat/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,6 +40,7 @@ func main() {
 
 		// 调用DeepSeek API
 		response, err := callDeepSeekAPI(deepSeekReq)
+		//err := utils.HandleWebSocket(c, deepSeekReq)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -60,6 +62,31 @@ func main() {
 			"response": response,
 		})
 	})
+	r.GET("/api/v1/chat/ws", func(c *gin.Context) {
+		// 调用DeepSeek API
+		//response, err := callDeepSeekAPI(deepSeekReq)
+		err := utils.HandleWebSocket(c)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status": "error",
+				"error":  err.Error(),
+			})
+			return
+		}
+
+		// 处理API错误
+		//if response.Error.Message != "" {
+		//	c.JSON(http.StatusBadGateway, gin.H{"error": response.Error.Message, "status": "error"})
+		//	return
+		//}
+
+		// 返回成功响应
+		c.JSON(http.StatusOK, gin.H{
+			"status":   "success",
+			"response": nil,
+		})
+	})
 
 	r.Run(":9998")
 }
@@ -75,8 +102,6 @@ func callDeepSeekAPI(req model.DeepSeekRequest) (*[]byte, error) {
 		return nil, err
 	}
 
-	client := &http.Client{Timeout: 60 * time.Second}
-
 	httpReq, err := http.NewRequest(
 		"POST",
 		"https://api.deepseek.com/v1/chat/completions",
@@ -91,6 +116,7 @@ func callDeepSeekAPI(req model.DeepSeekRequest) (*[]byte, error) {
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	httpReq.Header.Set("Accept", "text/event-stream")
 
+	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		fmt.Println("请求失败:", err)
